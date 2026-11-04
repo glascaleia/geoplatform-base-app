@@ -83,6 +83,11 @@ Prova dalla UI della base app in Docker, iniziata il 2026-11-04 (punti 3 e 4 dei
 `../geo-platform/CLAUDE.md`). Le correzioni stanno nei rami `domino-rest` di geo-platform e `gp_advanced_extensions`
 e nel ramo `docker` di questo progetto, tutti pubblicati su `origin` e non ancora uniti a `spring-upgrade`.
 
+**Prima di riprendere: Docker va ricostruito.** Il 2026-11-04 sera Docker è stato svuotato (container, volumi,
+immagini, rete e cache di build cancellati, Docker Desktop spento). Vanno ricostruite le immagini
+(`build-frontend.sh` e il war del servizio), riavviato il compose di `docker/` e rilanciato `bootstrap-core.sh`: i dati
+di PostGIS, GeoServer e Importer non ci sono più, quindi anche workspace e layer creati nelle prove vanno rifatti.
+
 Provato e funzionante:
 
 - Login, progetti e albero dei layer.
