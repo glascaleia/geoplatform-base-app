@@ -59,6 +59,10 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
 - La risorsa JNDI di GeoServer, che il layer builder usa per i datastore che crea, la scrive l'immagine dalle variabili
   `POSTGRES_*` nel `<Context>` di `server.xml`. Quel `<Context>` ha `override="true"`, quindi un `context.xml` montato
   in `conf/` verrebbe ignorato.
+- GeoServer ha due indirizzi: `geoserver_url` (`http://geoserver:8080/geoserver`), con cui servizi e base app gli
+  parlano dentro compose, e `geoserver_public_url` (`http://localhost:8081/geoserver`), che layer builder, file
+  importer e CSV importer scrivono nei layer per le richieste WMS del browser. Senza `geoserver_public_url` si usa
+  `geoserver_url`.
 - I servizi ammettono le chiamate da altre origini (CORS di CXF con `allowAllOrigins`).
 - La base app legge `frontend/conf/gp-ws.properties` (stesso meccanismo di `GP_DATA_DIR`): le servlet raggiungono
   servizi e GeoServer dalla rete di compose (`geoplatform-service`, `geoserver`). Il browser invece chiama i servizi
@@ -79,7 +83,5 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
 
 - La service root dei client Domino in una configurazione (oggi `http://localhost:8080/geoplatform-service`), e poi
   nginx davanti, così base app e servizi stanno sulla stessa origine.
-- Gli indirizzi di GeoServer: dentro compose è `http://geoserver:8080/geoserver`, che il browser non risolve. Se un
-  layer creato dalla UI prende quell'indirizzo, la mappa non lo carica.
 - I log del war sono molto verbosi (`logback.xml` con `debug="true"` e logger a trace) e alcuni scrivono chiavi e
   password: da ridurre con un `logback.xml` per il container.
