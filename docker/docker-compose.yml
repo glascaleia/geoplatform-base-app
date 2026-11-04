@@ -32,15 +32,18 @@ services:
       # REST Importer, usato dal file importer
       INSTALL_EXTENSIONS: "true"
       STABLE_EXTENSIONS: importer
-      # context.xml con la risorsa JNDI jdbc/postgres_layerbuilder dei datastore del layer builder
+      # risorsa JNDI dei datastore che crea il layer builder (jdbc.jndiReferenceName del servizio): l'immagine la
+      # scrive nel <Context> di geoserver in server.xml, che ha override="true" e quindi ignora conf/context.xml
       POSTGRES_JNDI_ENABLED: "true"
-      LAYER_BUILDER_DB_HOST: postgis
-      LAYER_BUILDER_DB_USER: postgres
-      LAYER_BUILDER_DB_PASSWORD: "0x,postgres,0x"
+      POSTGRES_JNDI_RESOURCE_NAME: jdbc/postgres_layerbuilder
+      POSTGRES_HOST: postgis
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: jdbc_template
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: "0x,postgres,0x"
     ports:
       - "8081:8080"
     volumes:
-      - ./geoserver/context.xml:/opt/config_overrides/context.xml:ro
       - geoserver-data:/opt/geoserver_data
       - importer-data:/var/lib/geoplatform/importer
     depends_on:

@@ -56,6 +56,9 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
 - Le system property `GP_*` si passano in `CATALINA_OPTS` (il codice le legge con `System.getProperty`, non come
   variabili d'ambiente). `GP_PERSISTENCE_PBE_KEY` viene da `sys.props` di geo-platform tramite il `.env` che scrive
   `build-backend.sh`, che non va nel repository.
+- La risorsa JNDI di GeoServer, che il layer builder usa per i datastore che crea, la scrive l'immagine dalle variabili
+  `POSTGRES_*` nel `<Context>` di `server.xml`. Quel `<Context>` ha `override="true"`, quindi un `context.xml` montato
+  in `conf/` verrebbe ignorato.
 - I servizi ammettono le chiamate da altre origini (CORS di CXF con `allowAllOrigins`).
 - La base app legge `frontend/conf/gp-ws.properties` (stesso meccanismo di `GP_DATA_DIR`): le servlet raggiungono
   servizi e GeoServer dalla rete di compose (`geoplatform-service`, `geoserver`). Il browser invece chiama i servizi
@@ -78,6 +81,5 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
   nginx davanti, così base app e servizi stanno sulla stessa origine.
 - Gli indirizzi di GeoServer: dentro compose è `http://geoserver:8080/geoserver`, che il browser non risolve. Se un
   layer creato dalla UI prende quell'indirizzo, la mappa non lo carica.
-- Il layer builder crea i datastore su GeoServer alla creazione del layer, con la risorsa JNDI: da provare dalla UI.
 - I log del war sono molto verbosi (`logback.xml` con `debug="true"` e logger a trace) e alcuni scrivono chiavi e
   password: da ridurre con un `logback.xml` per il container.
