@@ -8,3 +8,8 @@ COPY geoplatform-service.war /usr/local/tomcat/webapps/geoplatform-service.war
 
 # ehcache scrive in ./target rispetto alla cartella di lavoro
 WORKDIR /usr/local/tomcat
+
+# localhost:8081 -> geoserver:8080: vedi geoserver-forward.sh
+RUN apt-get update && apt-get install -y --no-install-recommends socat && rm -rf /var/lib/apt/lists/*
+COPY geoserver-forward.sh /usr/local/bin/geoserver-forward.sh
+CMD ["/usr/local/bin/geoserver-forward.sh"]

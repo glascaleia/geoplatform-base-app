@@ -63,6 +63,9 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
   parlano dentro compose, e `geoserver_public_url` (`http://localhost:8081/geoserver`), che layer builder, file
   importer e CSV importer scrivono nei layer per le richieste WMS del browser. Senza `geoserver_public_url` si usa
   `geoserver_url`.
+- Lo stesso indirizzo pubblico serve anche dai container: le transazioni WFS-T dell'editing partono dai servizi verso
+  l'indirizzo del layer. Per questo i container `geoplatform-service` e `baseapp` inoltrano `localhost:8081` a
+  `geoserver:8080` con `socat` (`geoserver-forward.sh`, uguale nelle due cartelle).
 - I servizi ammettono le chiamate da altre origini (CORS di CXF con `allowAllOrigins`).
 - La base app legge `frontend/conf/gp-ws.properties` (stesso meccanismo di `GP_DATA_DIR`): le servlet raggiungono
   servizi e GeoServer dalla rete di compose (`geoplatform-service`, `geoserver`). Il browser invece chiama i servizi
