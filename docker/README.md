@@ -26,6 +26,7 @@ Le password nel compose e nei file di `backend/conf` sono solo per lo sviluppo l
 ./build-frontend.sh                # baseapp.war con la compilazione GWT completa
 docker compose up -d --build
 ./bootstrap-core.sh                # solo la prima volta: account, progetti, layer e ACL del core
+./geoserver-setup.sh               # solo la prima volta: scrittura dei layer aperta a tutti (editing WFS-T)
 docker compose logs -f geoplatform-service   # fino a "Server startup in"
 ```
 
@@ -66,6 +67,8 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
 - Lo stesso indirizzo pubblico serve anche dai container: le transazioni WFS-T dell'editing partono dai servizi verso
   l'indirizzo del layer. Per questo i container `geoplatform-service` e `baseapp` inoltrano `localhost:8081` a
   `geoserver:8080` con `socat` (`geoserver-forward.sh`, uguale nelle due cartelle).
+- Le transazioni WFS-T arrivano a GeoServer dal servizio senza credenziali: `geoserver-setup.sh` apre a tutti la
+  scrittura dei layer (`*.*.w=*`), altrimenti GeoServer li considera in sola lettura. Solo per lo sviluppo.
 - `default_wfs_datasource` (il solo server su cui il servizio accetta le transazioni WFS-T) è l'indirizzo pubblico
   `http://localhost:8081/geoserver/wfs`, perché il servizio lo confronta con l'indirizzo del layer.
 - I servizi ammettono le chiamate da altre origini (CORS di CXF con `allowAllOrigins`).
