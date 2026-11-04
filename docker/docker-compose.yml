@@ -1,5 +1,6 @@
-# Backend di GeoPlatform per provare la base app: servizi (geoplatform-service.war su Tomcat 11), PostGIS, GeoServer
-# 2.28.4 (la versione V28x del connector) e Mailpit. Prima: ./build-backend.sh. Avvio: docker compose up -d --build.
+# GeoPlatform in locale: servizi (geoplatform-service.war su Tomcat 11), PostGIS, GeoServer
+# 2.28.4 (la versione V28x del connector), Mailpit e la base app. Prima: ./build-backend.sh e ./build-frontend.sh.
+# Avvio: docker compose up -d --build.
 name: geoplatform
 
 services:
@@ -67,6 +68,21 @@ services:
       mailpit:
         condition: service_started
 
+  # la base app (GWT): http://localhost:9393/BaseApp.html. Prima: ./build-frontend.sh
+  baseapp:
+    build: ./frontend
+    environment:
+      CATALINA_OPTS: >-
+        -Xmx1g
+        -DGP_DATA_DIR=/etc/geoplatform
+        -DGP_PERSISTENCE_PBE_KEY=${GP_PERSISTENCE_PBE_KEY:?eseguire prima ./build-backend.sh}
+    ports:
+      - "9393:8080"
+    volumes:
+      - ./frontend/conf:/etc/geoplatform:ro
+    depends_on:
+      geoplatform-service:
+        condition: service_started
 
   mailpit:
     image: axllent/mailpit:v1.27

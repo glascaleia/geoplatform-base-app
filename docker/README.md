@@ -1,12 +1,13 @@
-# Backend di GeoPlatform in Docker
+# GeoPlatform in Docker
 
-Lo stack dei servizi per provare la base app in locale:
+La base app e lo stack dei servizi, per provarla in locale:
 
 | Container | Immagine | Porta sull'host | Cosa fa |
 |---|---|---|---|
 | `geoplatform-service` | `tomcat:11.0-jdk21-temurin` con `geoplatform-service.war` | 8080 | i servizi (`/geoplatform-service/core`, `jsonCore`, `layerBuilder`, `csvImporter`, `geocoding`, `wms`, `wfs`...) |
 | `postgis` | `postgis/postgis:16-3.4` (amd64, emulata sui Mac arm64) | 5433 | database `gp` (core), `jdbc_template` (layer builder, con le tabelle di Spring Batch), `preview_gp` (publisher) |
 | `geoserver` | `docker.osgeo.org/geoserver:2.28.4` (la versione `V28x` del connector) | 8081 | con l'estensione Importer e la risorsa JNDI `jdbc/postgres_layerbuilder` su `jdbc_template`; utente `admin`, password `geoserver` |
+| `baseapp` | `tomcat:11.0-jdk21-temurin` con `baseapp.war` (nella radice) | 9393 | la base app GWT: http://localhost:9393/BaseApp.html |
 | `mailpit` | `axllent/mailpit` | 8025 | le mail delle notifiche (`gp-mail.properties`), da leggere su http://localhost:8025 |
 
 Le password nel compose e nei file di `backend/conf` sono solo per lo sviluppo locale.
@@ -22,13 +23,14 @@ Le password nel compose e nei file di `backend/conf` sono solo per lo sviluppo l
 
 ```
 ./build-backend.sh                 # war con tutti i profili (-Dfull), schema di Spring Batch, .env con la chiave jasypt
+./build-frontend.sh                # baseapp.war con la compilazione GWT completa
 docker compose up -d --build
 ./bootstrap-core.sh                # solo la prima volta: account, progetti, layer e ACL del core
 docker compose logs -f geoplatform-service   # fino a "Server startup in"
 ```
 
 `bootstrap-core.sh` lancia `BootstrapInitializerTest` di `geoplatform-initializer` sul database `gp` (porta 5433):
-**cancella e ricrea tutti i dati del core**. Gli account creati sono quelli del test (`admin`, `user`, `viewer`, ...).
+**cancella e ricrea tutti i dati del core**. Gli account creati sono quelli del test: `admin`, `user` e `viewer`, con la password uguale al nome.
 Le tabelle le crea il war all'avvio (`hbm2ddl=update`), oppure il test stesso se il war non è ancora partito.
 
 Prove veloci:
@@ -55,6 +57,10 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
   variabili d'ambiente). `GP_PERSISTENCE_PBE_KEY` viene da `sys.props` di geo-platform tramite il `.env` che scrive
   `build-backend.sh`, che non va nel repository.
 - I servizi ammettono le chiamate da altre origini (CORS di CXF con `allowAllOrigins`).
+- La base app legge `frontend/conf/gp-ws.properties` (stesso meccanismo di `GP_DATA_DIR`): le servlet raggiungono
+  servizi e GeoServer dalla rete di compose (`geoplatform-service`, `geoserver`). Il browser invece chiama i servizi
+  REST migrati a Domino su `http://localhost:8080/geoplatform-service`, la service root scritta nelle interfacce: per
+  questo il backend pubblica la porta 8080 e serve il CORS.
 
 ## Problemi trovati al primo avvio (corretti nei rami `domino-rest`)
 
@@ -68,7 +74,10 @@ Per fermare tutto: `docker compose down` (i dati restano nei volumi); `docker co
 
 ## Da fare
 
-- Il frontend: `baseapp.war` con nginx davanti, così base app e servizi stanno sulla stessa origine.
+- La service root dei client Domino in una configurazione (oggi `http://localhost:8080/geoplatform-service`), e poi
+  nginx davanti, così base app e servizi stanno sulla stessa origine.
+- Gli indirizzi di GeoServer: dentro compose è `http://geoserver:8080/geoserver`, che il browser non risolve. Se un
+  layer creato dalla UI prende quell'indirizzo, la mappa non lo carica.
 - Il layer builder crea i datastore su GeoServer alla creazione del layer, con la risorsa JNDI: da provare dalla UI.
 - I log del war sono molto verbosi (`logback.xml` con `debug="true"` e logger a trace) e alcuni scrivono chiavi e
   password: da ridurre con un `logback.xml` per il container.

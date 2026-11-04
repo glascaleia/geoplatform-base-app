@@ -1,4 +1,5 @@
-# prodotti da build-backend.sh
+# prodotti da build-backend.sh e build-frontend.sh
 backend/geoplatform-service.war
 postgis/generated/
 .env
+frontend/baseapp.war
