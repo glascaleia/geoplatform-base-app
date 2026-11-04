@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- context.xml del Tomcat di GeoServer: la risorsa JNDI che il layer builder usa per i datastore che crea
+     (jdbc.jndiReferenceName=java:comp/env/jdbc/postgres_layerbuilder), sul database jdbc_template. Lo script di avvio
+     dell'immagine sostituisce le variabili d'ambiente. -->
+<Context>
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+    <WatchedResource>WEB-INF/tomcat-web.xml</WatchedResource>
+    <WatchedResource>${catalina.base}/conf/web.xml</WatchedResource>
+
+    <Resource name="jdbc/postgres_layerbuilder"
+              auth="Container"
+              type="javax.sql.DataSource"
+              driverClassName="org.postgresql.Driver"
+              url="jdbc:postgresql://${LAYER_BUILDER_DB_HOST}:5432/jdbc_template"
+              username="${LAYER_BUILDER_DB_USER}"
+              password="${LAYER_BUILDER_DB_PASSWORD}"
+              maxTotal="20"
+              maxIdle="5"
+              maxWaitMillis="10000"
+              validationQuery="SELECT 1"
+              testOnBorrow="true"/>
+</Context>

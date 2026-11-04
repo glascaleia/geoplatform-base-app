@@ -1,0 +1,79 @@
+# Backend di GeoPlatform per provare la base app: servizi (geoplatform-service.war su Tomcat 11), PostGIS, GeoServer
+# 2.28.4 (la versione V28x del connector) e Mailpit. Prima: ./build-backend.sh. Avvio: docker compose up -d --build.
+name: geoplatform
+
+services:
+
+  postgis:
+    image: postgis/postgis:16-3.4
+    # l'immagine esiste solo per amd64: sui Mac arm64 gira emulata
+    platform: linux/amd64
+    environment:
+      POSTGRES_PASSWORD: "0x,postgres,0x"
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgis/init:/docker-entrypoint-initdb.d:ro
+      - ./postgis/generated:/geoplatform-sql:ro
+      - postgis-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jdbc_template"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.28.4
+    environment:
+      GEOSERVER_ADMIN_USER: admin
+      GEOSERVER_ADMIN_PASSWORD: geoserver
+      SKIP_DEMO_DATA: "true"
+      # REST Importer, usato dal file importer
+      INSTALL_EXTENSIONS: "true"
+      STABLE_EXTENSIONS: importer
+      # context.xml con la risorsa JNDI jdbc/postgres_layerbuilder dei datastore del layer builder
+      POSTGRES_JNDI_ENABLED: "true"
+      LAYER_BUILDER_DB_HOST: postgis
+      LAYER_BUILDER_DB_USER: postgres
+      LAYER_BUILDER_DB_PASSWORD: "0x,postgres,0x"
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./geoserver/context.xml:/opt/config_overrides/context.xml:ro
+      - geoserver-data:/opt/geoserver_data
+      - importer-data:/var/lib/geoplatform/importer
+    depends_on:
+      postgis:
+        condition: service_healthy
+
+  geoplatform-service:
+    build: ./backend
+    environment:
+      CATALINA_OPTS: >-
+        -Xmx2g
+        -DGP_DATA_DIR=/etc/geoplatform
+        -DGP_PERSISTENCE_PBE_KEY=${GP_PERSISTENCE_PBE_KEY:?eseguire prima ./build-backend.sh}
+        -Duser.home=/var/lib/geoplatform
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/conf:/etc/geoplatform:ro
+      - importer-data:/var/lib/geoplatform/importer
+    depends_on:
+      postgis:
+        condition: service_healthy
+      geoserver:
+        condition: service_started
+      mailpit:
+        condition: service_started
+
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+
+volumes:
+  postgis-data:
+  geoserver-data:
+  importer-data:
